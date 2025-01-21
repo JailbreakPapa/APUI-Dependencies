@@ -1,0 +1,71 @@
+name: Build V8 Windows - DLL
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      DEPOT_TOOLS_WIN_TOOLCHAIN: 0
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    
+    - name: Install Visual Studio Components
+      uses: microsoft/setup-msbuild@v2
+    
+    - name: Install depot_tools
+      run: |
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+        echo "${{github.workspace}}\depot_tools" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+    
+    - name: Configure git
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.filemode false
+    
+    - name: Install Ninja
+      shell: cmd
+      run: |
+        choco install ninja
+        ninja --version
+    
+    - name: Fetch V8
+      run: |
+        mkdir v8
+        cd v8
+        fetch v8
+        cd v8
+        git checkout 12.4.254.21
+        gclient sync
+    
+    - name: Generate Build Files
+      shell: cmd
+      run: |
+        cd v8\v8
+        gn gen out/Release --args="is_clang=false is_component_build=true is_debug=false target_cpu=\"x64\" v8_enable_i18n_support=false v8_use_external_startup_data=false treat_warnings_as_errors=false v8_enable_webassembly=false shared_library_name=\"v8\" v8_enable_backtrace=true v8_enable_verify_heap=true is_official_build=true strip_debug_info=true symbol_level=0 v8_enable_v8_checks=false v8_header_src=\"//v8/include\" v8_enable_pointer_compression=false"
+    
+    - name: Build V8
+      shell: cmd
+      run: |
+        cd v8\v8
+        ninja -C out/Release v8
+    
+    - name: Archive artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: v8-windows-build
+        path: |
+          v8/v8/out/Release/*.dll
+          v8/v8/out/Release/*.lib
+          v8/v8/out/Release/*.pdb
