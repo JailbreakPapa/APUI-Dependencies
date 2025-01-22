@@ -46,7 +46,7 @@ jobs:
         cd v8
         fetch v8
         cd v8
-        git checkout 8.2.77
+        git checkout 10.0.139.17
         gclient sync
     
     - name: Generate Build Files
