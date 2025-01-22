@@ -53,7 +53,7 @@ jobs:
       shell: cmd
       run: |
         cd v8\v8
-        gn gen out/Release --args="is_debug=false use_glib=false is_component_build=true v8_use_external_startup_data=true v8_static_library=false is_clang = false v8_enable_i18n_support=false target_cpu=\"x64\""
+        gn gen out/Release --args="is_debug=false use_glib=false is_component_build=true treat_warnings_as_errors=false v8_use_external_startup_data=true v8_static_library=false is_clang = false v8_enable_i18n_support=false target_cpu=\"x64\""
     
     - name: Build V8
       shell: cmd
